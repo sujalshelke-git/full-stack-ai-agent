@@ -15,11 +15,11 @@ export const onTicketCreated = inngest.createFunction(
       //fetch ticket from DB
       const ticket = await step.run("fetch-ticket", async () => {
         const ticketObject = await Ticket.findById(ticketId);
-        if (!ticketObject) {
+        if (!ticket) {
           throw new NonRetriableError("Ticket not found");
         }
         return ticketObject;
-      }) as typeof Ticket.prototype;
+      });
 
       await step.run("update-ticket-status", async () => {
         await Ticket.findByIdAndUpdate(ticket._id, { status: "TODO" });
@@ -62,15 +62,15 @@ export const onTicketCreated = inngest.createFunction(
           assignedTo: user?._id || null,
         });
         return user;
-      }) as (typeof User.prototype & { email?: string }) | null;
+      });
 
-      await step.run("send-email-notification", async () => {
-        if (moderator && moderator.email) {
+      await setp.run("send-email-notification", async () => {
+        if (moderator) {
           const finalTicket = await Ticket.findById(ticket._id);
           await sendMail(
             moderator.email,
             "Ticket Assigned",
-            `A new ticket is assigned to you ${finalTicket?.title ?? ""}`
+            `A new ticket is assigned to you ${finalTicket.title}`
           );
         }
       });
