@@ -23,8 +23,7 @@ IMPORTANT:
 Repeat: Do not wrap your output in markdown or code fences.`,
   });
 
-  const response =
-    await supportAgent.run(`You are a ticket triage agent. Only return a strict JSON object with no extra text, headers, or markdown.
+  const response = await supportAgent.run(`You are a ticket triage agent. Only return a strict JSON object with no extra text, headers, or markdown.
         
 Analyze the following support ticket and provide a JSON object with:
 
@@ -36,10 +35,10 @@ Analyze the following support ticket and provide a JSON object with:
 Respond ONLY in this JSON format and do not include any other text or markdown in the answer:
 
 {
-"summary": "Short summary of the ticket",
-"priority": "high",
-"helpfulNotes": "Here are useful tips...",
-"relatedSkills": ["React", "Node.js"]
+  "summary": "Short summary of the ticket",
+  "priority": "high",
+  "helpfulNotes": "Here are useful tips...",
+  "relatedSkills": ["React", "Node.js"]
 }
 
 ---
@@ -49,18 +48,32 @@ Ticket information:
 - Title: ${ticket.title}
 - Description: ${ticket.description}`);
 
-  const raw = response.output[0].context;
+  // ✅ Safely access response
+  const raw = response?.output?.[0]?.content;
+
+  if (!raw) {
+    console.error("❌ No context returned from AI response");
+    return null;
+  }
 
   try {
+    // If AI still wraps in code block, remove it
     const match = raw.match(/```json\s*([\s\S]*?)\s*```/i);
     const jsonString = match ? match[1] : raw.trim();
-    return JSON.parse(jsonString);
+
+    const parsed = JSON.parse(jsonString);
+
+    // Validate expected fields
+    if (!parsed.priority || !parsed.relatedSkills || !parsed.helpfulNotes) {
+      throw new Error("Missing expected fields in AI response");
+    }
+
+    return parsed;
   } catch (e) {
-    console.log("Failed to parse JSON from AI response" + e.message);
-    return null; // watch out for this
+    console.error("❌ Failed to parse JSON from AI response:", e.message);
+    console.error("⚠️ Raw AI Output:", raw);
+    return null;
   }
 };
 
 export default analyzeTicket;
-
-

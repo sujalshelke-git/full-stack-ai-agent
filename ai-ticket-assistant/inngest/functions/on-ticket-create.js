@@ -12,28 +12,31 @@ export const onTicketCreated = inngest.createFunction(
     try {
       const { ticketId } = event.data;
 
-      //fetch ticket from DB
+      // ✅ Step 1: Fetch the ticket
       const ticket = await step.run("fetch-ticket", async () => {
-        const ticketObject = await Ticket.findById(ticketId);
-        if (!ticket) {
+        const ticketObject = await Ticket.findById(ticketId).populate("createdBy");
+        if (!ticketObject) {
           throw new NonRetriableError("Ticket not found");
         }
         return ticketObject;
       });
 
+      // ✅ Step 2: Set initial status to TODO
       await step.run("update-ticket-status", async () => {
         await Ticket.findByIdAndUpdate(ticket._id, { status: "TODO" });
       });
 
+      // ✅ Step 3: AI Analysis
       const aiResponse = await analyzeTicket(ticket);
 
+      // ✅ Step 4: Update ticket with AI suggestions
       const relatedskills = await step.run("ai-processing", async () => {
         let skills = [];
         if (aiResponse) {
           await Ticket.findByIdAndUpdate(ticket._id, {
-            priority: !["low", "medium", "high"].includes(aiResponse.priority)
-              ? "medium"
-              : aiResponse.priority,
+            priority: ["low", "medium", "high"].includes(aiResponse.priority)
+              ? aiResponse.priority
+              : "medium",
             helpfulNotes: aiResponse.helpfulNotes,
             status: "IN_PROGRESS",
             relatedSkills: aiResponse.relatedSkills,
@@ -43,34 +46,32 @@ export const onTicketCreated = inngest.createFunction(
         return skills;
       });
 
+      // ✅ Step 5: Assign a moderator or fallback to admin
       const moderator = await step.run("assign-moderator", async () => {
         let user = await User.findOne({
           role: "moderator",
-          skills: {
-            $elemMatch: {
-              $regex: relatedskills.join("|"),
-              $options: "i",
-            },
-          },
+          skills: { $elemMatch: { $regex: relatedskills.join("|"), $options: "i" } },
         });
+
         if (!user) {
-          user = await User.findOne({
-            role: "admin",
-          });
+          user = await User.findOne({ role: "admin" });
         }
+
         await Ticket.findByIdAndUpdate(ticket._id, {
           assignedTo: user?._id || null,
         });
+
         return user;
       });
 
-      await setp.run("send-email-notification", async () => {
-        if (moderator) {
+      // ✅ Step 6: Send email to assigned moderator
+      await step.run("send-email-notification", async () => {
+        if (moderator && moderator.email) {
           const finalTicket = await Ticket.findById(ticket._id);
           await sendMail(
             moderator.email,
-            "Ticket Assigned",
-            `A new ticket is assigned to you ${finalTicket.title}`
+            "🎫 New Ticket Assigned",
+            `You have been assigned a ticket: ${finalTicket.title}`
           );
         }
       });

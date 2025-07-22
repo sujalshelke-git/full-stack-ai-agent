@@ -1,15 +1,18 @@
 import { inngest } from "../inngest/client.js";
 import Ticket from "../models/ticket.js";
 
+// ✅ Create a new ticket
 export const createTicket = async (req, res) => {
   try {
     const { title, description } = req.body;
+
     if (!title || !description) {
       return res
         .status(400)
         .json({ message: "Title and description are required" });
     }
-    const newTicket = Ticket.create({
+
+    const newTicket = await Ticket.create({
       title,
       description,
       createdBy: req.user._id.toString(),
@@ -18,12 +21,13 @@ export const createTicket = async (req, res) => {
     await inngest.send({
       name: "ticket/created",
       data: {
-        ticketId: (await newTicket)._id.toString(),
+        ticketId: newTicket._id.toString(),
         title,
         description,
         createdBy: req.user._id.toString(),
       },
     });
+
     return res.status(201).json({
       message: "Ticket created and processing started",
       ticket: newTicket,
@@ -34,19 +38,26 @@ export const createTicket = async (req, res) => {
   }
 };
 
+// ✅ Get all tickets (for user or admin)
 export const getTickets = async (req, res) => {
   try {
     const user = req.user;
     let tickets = [];
+
     if (user.role !== "user") {
-      tickets = Ticket.find({})
+      // Admin: get all tickets
+      tickets = await Ticket.find({})
         .populate("assignedTo", ["email", "_id"])
+        .populate("createdBy", ["email", "_id"])
         .sort({ createdAt: -1 });
     } else {
+      // User: only their tickets
       tickets = await Ticket.find({ createdBy: user._id })
-        .select("title description status createdAt")
+        .populate("assignedTo", ["email", "_id"])
+        .populate("createdBy", ["email", "_id"])
         .sort({ createdAt: -1 });
     }
+
     return res.status(200).json(tickets);
   } catch (error) {
     console.error("Error fetching tickets", error.message);
@@ -54,36 +65,40 @@ export const getTickets = async (req, res) => {
   }
 };
 
+// ✅ Get a single ticket by ID (user/admin)
 export const getTicket = async (req, res) => {
   try {
     const user = req.user;
     let ticket;
 
     if (user.role !== "user") {
-      ticket = Ticket.findById(req.params.id).populate("assignedTo", [
-        "email",
-        "_id",
-      ]);
+      // Admin: can access any ticket
+      ticket = await Ticket.findById(req.params.id)
+        .populate("assignedTo", ["email", "_id"])
+        .populate("createdBy", ["email", "_id"]);
     } else {
-      ticket = Ticket.findOne({
-        createdBy: user._id,
+      // User: can only access their own ticket
+      ticket = await Ticket.findOne({
         _id: req.params.id,
-      }).select("title description status createdAt");
+        createdBy: user._id,
+      })
+        .populate("assignedTo", ["email", "_id"])
+        .populate("createdBy", ["email", "_id"]);
     }
 
     if (!ticket) {
       return res.status(404).json({ message: "Ticket not found" });
     }
-    return res.status(404).json({ ticket });
+
+    return res.status(200).json({ ticket });
   } catch (error) {
     console.error("Error fetching ticket", error.message);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-
-
-//  export const updateTicket = async (req, res) => {
+// Update a ticket (optional, kept commented if unused)
+// export const updateTicket = async (req, res) => {
 //   try {
 //     const { id } = req.params;
 //     const { title, description, status, assignedTo } = req.body;
@@ -102,9 +117,12 @@ export const getTicket = async (req, res) => {
 //       return res.status(404).json({ message: "Ticket not found" });
 //     }
 
-//     return res.status(200).json({ message: "Ticket updated successfully", ticket: updatedTicket });
+//     return res.status(200).json({
+//       message: "Ticket updated successfully",
+//       ticket: updatedTicket,
+//     });
 //   } catch (error) {
 //     console.error("Error updating ticket", error.message);
 //     return res.status(500).json({ message: "Internal Server Error" });
 //   }
-// }
+// };
