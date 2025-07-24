@@ -8,7 +8,7 @@ import TicketDetailsPage from "./pages/ticket.jsx";
 import Login from "./pages/login.jsx";
 import Signup from "./pages/signup.jsx";
 import Admin from "./pages/admin.jsx";
-import Layout from "./layout.jsx";
+import Layout from "./Layout.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

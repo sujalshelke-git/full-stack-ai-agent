@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Tickets() {
   const [form, setForm] = useState({ title: "", description: "" });
@@ -35,6 +37,7 @@ export default function Tickets() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/tickets`, {
         method: "POST",
@@ -49,15 +52,39 @@ export default function Tickets() {
 
       if (res.ok) {
         setForm({ title: "", description: "" });
+        toast.success("✅ Ticket created successfully");
         await fetchTickets();
       } else {
-        alert(data.message || "Ticket creation failed");
+        toast.error(data.message || "Ticket creation failed");
       }
     } catch (err) {
-      alert("Error creating ticket");
+      toast.error("❌ Error creating ticket");
       console.error("❌ Ticket creation error:", err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const confirmed = window.confirm("Are you sure you want to delete this ticket?");
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/tickets/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setTickets((prev) => prev.filter((ticket) => ticket._id !== id));
+        toast.success("🗑️ Ticket deleted successfully");
+      } else {
+        toast.error(data.message || "Failed to delete ticket");
+      }
+    } catch (err) {
+      console.error("Error deleting ticket:", err);
+      toast.error("❌ Failed to delete ticket");
     }
   };
 
@@ -118,26 +145,36 @@ export default function Tickets() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {tickets.map((ticket) => (
-            <Link
+            <div
               key={ticket._id}
-              to={`/tickets/${ticket._id}`}
-              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm hover:shadow-lg transition duration-200 block"
+              className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm hover:shadow-lg transition duration-200"
             >
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                {ticket.title}
-              </h3>
-              <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                {ticket.description.length > 100
-                  ? ticket.description.slice(0, 100) + "..."
-                  : ticket.description}
-              </p>
-              <p className="text-xs text-gray-500">
-                Created on:{" "}
-                <span className="font-medium">
-                  {new Date(ticket.createdAt).toLocaleString()}
-                </span>
-              </p>
-            </Link>
+              <Link to={`/tickets/${ticket._id}`}>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  {ticket.title}
+                </h3>
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                  {ticket.description.length > 100
+                    ? ticket.description.slice(0, 100) + "..."
+                    : ticket.description}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Created on:{" "}
+                  <span className="font-medium">
+                    {new Date(ticket.createdAt).toLocaleString()}
+                  </span>
+                </p>
+              </Link>
+
+              {/* ✅ Delete button */}
+              <button
+                onClick={() => handleDelete(ticket._id)}
+                className="absolute top-3 right-3 text-red-500 hover:text-red-700 text-sm"
+                title="Delete ticket"
+              >
+                Delete🗑️
+              </button>
+            </div>
           ))}
         </div>
 
@@ -147,6 +184,19 @@ export default function Tickets() {
           </p>
         )}
       </div>
+
+      {/* ✅ Toast Container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 }

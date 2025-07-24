@@ -4,15 +4,17 @@ import {
   createTicket,
   getTicket,
   getTickets,
-  // updateTicket, // Uncomment if you implement it
+  deleteTicket, // ✅ New: Delete controller
+  // updateTicket,
 } from "../controllers/ticket.js";
 
 const router = express.Router();
 
 // 🔐 All routes are protected by 'authenticate' middleware
-router.post("/", authenticate, createTicket);        // ✅ Create new ticket
-router.get("/", authenticate, getTickets);           // ✅ Get all tickets for user/admin
-router.get("/:id", authenticate, getTicket);         // ✅ Get ticket by ID
-// router.put("/:id", authenticate, updateTicket);    // ⬅️ Optional: Update ticket endpoint
+router.post("/", authenticate, createTicket);
+router.get("/", authenticate, getTickets);
+router.get("/:id", authenticate, getTicket);
+router.delete("/:id", authenticate, deleteTicket); // ✅ New: Delete ticket route
+// router.put("/:id", authenticate, updateTicket);
 
 export default router;

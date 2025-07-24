@@ -97,6 +97,47 @@ export const getTicket = async (req, res) => {
   }
 };
 
+// ✅ Delete a ticket (with Inngest logging)
+export const deleteTicket = async (req, res) => {
+  try {
+    const user = req.user;
+
+    // Only allow deleting tickets created by the user
+    const ticket = await Ticket.findOneAndDelete({
+      _id: req.params.id,
+      createdBy: user._id,
+    });
+
+    if (!ticket) {
+      return res
+        .status(404)
+        .json({ message: "Ticket not found or unauthorized" });
+    }
+
+    // ✅ Send delete event to Inngest
+    await inngest.send({
+      name: "ticket/deleted",
+      data: {
+        ticketId: ticket._id.toString(),
+        title: ticket.title,
+        description: ticket.description,
+        deletedAt: new Date().toISOString(),
+        deletedBy: {
+          id: user._id.toString(),
+          email: user.email,
+          role: user.role,
+        },
+      },
+    });
+
+    return res.status(200).json({ message: "Ticket deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting ticket", error.message);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
 // Update a ticket (optional, kept commented if unused)
 // export const updateTicket = async (req, res) => {
 //   try {

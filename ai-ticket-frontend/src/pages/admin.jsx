@@ -84,35 +84,52 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-10">
-      <h1 className="text-2xl font-bold mb-6">Admin Panel - Manage Users</h1>
+    <div className="max-w-5xl mx-auto px-4 mt-10">
+      <h1 className="text-3xl font-bold text-center mb-8">
+        🎛️ Admin Panel - Manage Users
+      </h1>
+
       <input
         type="text"
-        className="input input-bordered w-full mb-6"
-        placeholder="Search by email"
+        className="input input-bordered input-lg w-full mb-8 placeholder-gray-500"
+        placeholder="🔍 Search users by email..."
         value={searchQuery}
         onChange={handleSearch}
       />
+
       {filteredUsers.map((user) => (
         <div
           key={user._id}
-          className="bg-base-100 shadow rounded p-4 mb-4 border"
+          className="bg-white shadow-md rounded-lg p-6 mb-6 border border-gray-200 hover:shadow-lg transition duration-300"
         >
-          <p>
-            <strong>Email:</strong> {user.email}
-          </p>
-          <p>
-            <strong>Current Role:</strong> {user.role}
-          </p>
-          <p>
-            <strong>Skills:</strong>{" "}
-            {user.skills && user.skills.length > 0
-              ? user.skills.join(", ")
-              : "N/A"}
-          </p>
+          <div className="mb-2">
+            <p className="text-gray-700">
+              <strong>Email:</strong> {user.email}
+            </p>
+            <p className="text-gray-700">
+              <strong>Current Role:</strong>{" "}
+              <span
+                className={`badge ${
+                  user.role === "admin"
+                    ? "badge-error"
+                    : user.role === "moderator"
+                    ? "badge-warning"
+                    : "badge-neutral"
+                }`}
+              >
+                {user.role}
+              </span>
+            </p>
+            <p className="text-gray-700">
+              <strong>Skills:</strong>{" "}
+              {user.skills && user.skills.length > 0
+                ? user.skills.join(", ")
+                : "N/A"}
+            </p>
+          </div>
 
           {editingUser === user.email ? (
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-3">
               <select
                 className="select select-bordered w-full"
                 value={formData.role}
@@ -135,27 +152,27 @@ export default function AdminPanel() {
                 }
               />
 
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <button
                   className="btn btn-success btn-sm"
                   onClick={handleUpdate}
                 >
-                  Save
+                  ✅ Save
                 </button>
                 <button
                   className="btn btn-ghost btn-sm"
                   onClick={() => setEditingUser(null)}
                 >
-                  Cancel
+                  ❌ Cancel
                 </button>
               </div>
             </div>
           ) : (
             <button
-              className="btn btn-primary btn-sm mt-2"
+              className="btn btn-primary btn-sm mt-4"
               onClick={() => handleEditClick(user)}
             >
-              Edit
+              ✏️ Edit
             </button>
           )}
         </div>
