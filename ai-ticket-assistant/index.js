@@ -11,13 +11,13 @@ import { onTicketCreated } from "./inngest/functions/on-ticket-create.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-const PORT = process.env.PORT || 3000;
-const app = express();
-
-app.use(cors({
-  origin: ["https://full-stack-ai-agent.vercel.app"],
+const PORT = process.env.PORT;app.use(cors({
+  origin: [process.env.APP_URL],
   credentials: true
 }));
+const app = express();
+
+
 app.use(express.json());
 
 app.use("/api/auth", userRoutes);
