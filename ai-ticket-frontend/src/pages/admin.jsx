@@ -15,7 +15,7 @@ export default function AdminPanel() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/auth/users`, {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/auth/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

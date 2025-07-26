@@ -12,7 +12,7 @@ export default function Tickets() {
 
   const fetchTickets = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/tickets`, {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/tickets`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -70,7 +70,7 @@ export default function Tickets() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}api/tickets/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/tickets/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
