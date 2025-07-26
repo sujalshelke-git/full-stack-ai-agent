@@ -11,11 +11,12 @@ import { onTicketCreated } from "./inngest/functions/on-ticket-create.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-const PORT = process.env.PORT;app.use(cors({
+const app = express();
+const PORT = process.env.PORT;
+app.use(cors({
   origin: [process.env.APP_URL],
   credentials: true
 }));
-const app = express();
 
 
 app.use(express.json());
