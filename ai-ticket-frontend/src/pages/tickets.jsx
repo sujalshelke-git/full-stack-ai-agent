@@ -39,7 +39,7 @@ export default function Tickets() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/tickets`, {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/tickets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
