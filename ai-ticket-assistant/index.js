@@ -14,9 +14,7 @@ dotenv.config();
 const app = express();
 // dynamic port for Render
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-});
+
 app.use(cors({
   origin: [process.env.APP_URL],
   credentials: true
@@ -40,6 +38,6 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected ✅");
-    app.listen(PORT, () => console.log("🚀 Server at http://localhost:3000"));
+    app.listen(PORT, () => console.log(`🚀 Server is running on port ${PORT}`));
   })
   .catch((err) => console.error("❌ MongoDB error: ", err));
