@@ -1,5 +1,5 @@
 import express from "express";
-import mongoose from "mongoose";
+import mongoose from "mongoose"
 import cors from "cors";
 import { serve } from "inngest/express";
 import userRoutes from "./routes/user.js";
