@@ -120,19 +120,21 @@ export default function TicketDetailsPage() {
   const { id } = useParams();
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState(null);
 
   const token = localStorage.getItem("token");
 
-  // 🔐 Decode token to get user role
-  let role = null;
-  if (token) {
-    try {
-      const decoded = jwtDecode(token);
-      role = decoded.role;
-    } catch (err) {
-      console.error("Failed to decode token:", err);
+  // ✅ Decode token safely in useEffect
+  useEffect(() => {
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        setRole(decoded.role);
+      } catch (err) {
+        console.error("Failed to decode token:", err);
+      }
     }
-  }
+  }, [token]);
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -160,7 +162,7 @@ export default function TicketDetailsPage() {
     };
 
     fetchTicket();
-  }, [id]);
+  }, [id, token]);
 
   if (loading)
     return <div className="text-center mt-10 text-gray-600">Loading ticket details...</div>;
@@ -192,7 +194,6 @@ export default function TicketDetailsPage() {
                 <span className="capitalize">{ticket.status}</span>
               </p>
 
-              {/* 👇 Only admin or moderator can see Priority */}
               {(role === "admin" || role === "moderator") && ticket.priority && (
                 <p>
                   <span className="font-semibold text-gray-800 dark:text-white">Priority:</span>{" "}
@@ -200,7 +201,6 @@ export default function TicketDetailsPage() {
                 </p>
               )}
 
-              {/* 👇 Only admin or moderator can see Related Skills */}
               {(role === "admin" || role === "moderator") && ticket.relatedSkills?.length > 0 && (
                 <p>
                   <span className="font-semibold text-gray-800 dark:text-white">Related Skills:</span>{" "}
@@ -224,7 +224,6 @@ export default function TicketDetailsPage() {
           </>
         )}
 
-        {/* 👇 Only admin or moderator can see Helpful Notes */}
         {(role === "admin" || role === "moderator") && ticket.helpfulNotes && (
           <div className="pt-4 border-t border-gray-300 dark:border-gray-600 mt-4">
             <p className="font-semibold text-gray-800 dark:text-white mb-2">Helpful Notes:</p>
