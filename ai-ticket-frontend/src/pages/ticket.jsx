@@ -114,7 +114,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode"; // ✅ Corrected named import
 
 export default function TicketDetailsPage() {
   const { id } = useParams();
@@ -122,21 +122,21 @@ export default function TicketDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState(null);
 
-  const token = localStorage.getItem("token");
-
-  // ✅ Decode token safely in useEffect
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    // ✅ Decode role safely
     if (token) {
       try {
-        const decoded = jwtDecode(token);
-        setRole(decoded.role);
-      } catch (err) {
-        console.error("Failed to decode token:", err);
+        const decoded = jwtDecode(token); // ✅ Use named function
+        if (decoded && decoded.role) {
+          setRole(decoded.role);
+        }
+      } catch (error) {
+        console.error("Token decode failed:", error);
       }
     }
-  }, [token]);
 
-  useEffect(() => {
     const fetchTicket = async () => {
       try {
         const res = await fetch(
@@ -153,8 +153,8 @@ export default function TicketDetailsPage() {
         } else {
           alert(data.message || "Failed to fetch ticket");
         }
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error("Fetch error:", error);
         alert("Something went wrong");
       } finally {
         setLoading(false);
@@ -162,12 +162,15 @@ export default function TicketDetailsPage() {
     };
 
     fetchTicket();
-  }, [id, token]);
+  }, [id]);
 
-  if (loading)
+  if (loading) {
     return <div className="text-center mt-10 text-gray-600">Loading ticket details...</div>;
-  if (!ticket)
+  }
+
+  if (!ticket) {
     return <div className="text-center mt-10 text-red-500">Ticket not found</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -187,41 +190,39 @@ export default function TicketDetailsPage() {
         <p className="text-gray-700 dark:text-gray-300">{ticket.description}</p>
 
         {ticket.status && (
-          <>
-            <div className="border-t border-gray-300 dark:border-gray-600 pt-4 mt-4 space-y-2">
+          <div className="border-t border-gray-300 dark:border-gray-600 pt-4 mt-4 space-y-2">
+            <p>
+              <span className="font-semibold text-gray-800 dark:text-white">Status:</span>{" "}
+              <span className="capitalize">{ticket.status}</span>
+            </p>
+
+            {(role === "admin" || role === "moderator") && ticket.priority && (
               <p>
-                <span className="font-semibold text-gray-800 dark:text-white">Status:</span>{" "}
-                <span className="capitalize">{ticket.status}</span>
+                <span className="font-semibold text-gray-800 dark:text-white">Priority:</span>{" "}
+                <span className="capitalize">{ticket.priority}</span>
               </p>
+            )}
 
-              {(role === "admin" || role === "moderator") && ticket.priority && (
-                <p>
-                  <span className="font-semibold text-gray-800 dark:text-white">Priority:</span>{" "}
-                  <span className="capitalize">{ticket.priority}</span>
-                </p>
-              )}
+            {(role === "admin" || role === "moderator") && ticket.relatedSkills?.length > 0 && (
+              <p>
+                <span className="font-semibold text-gray-800 dark:text-white">Related Skills:</span>{" "}
+                {ticket.relatedSkills.join(", ")}
+              </p>
+            )}
 
-              {(role === "admin" || role === "moderator") && ticket.relatedSkills?.length > 0 && (
-                <p>
-                  <span className="font-semibold text-gray-800 dark:text-white">Related Skills:</span>{" "}
-                  {ticket.relatedSkills.join(", ")}
-                </p>
-              )}
+            {ticket.assignedTo && (
+              <p>
+                <span className="font-semibold text-gray-800 dark:text-white">Assigned To:</span>{" "}
+                {ticket.assignedTo?.email}
+              </p>
+            )}
 
-              {ticket.assignedTo && (
-                <p>
-                  <span className="font-semibold text-gray-800 dark:text-white">Assigned To:</span>{" "}
-                  {ticket.assignedTo?.email}
-                </p>
-              )}
-
-              {ticket.createdAt && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Created At: {new Date(ticket.createdAt).toLocaleString()}
-                </p>
-              )}
-            </div>
-          </>
+            {ticket.createdAt && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Created At: {new Date(ticket.createdAt).toLocaleString()}
+              </p>
+            )}
+          </div>
         )}
 
         {(role === "admin" || role === "moderator") && ticket.helpfulNotes && (
